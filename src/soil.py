@@ -63,7 +63,7 @@ class SoilLayer:
                     t = 'X' in self.grid[index_row - 1][index_col] 
                     b = 'X' in self.grid[index_row + 1][index_col]
                     r = 'X' in row[index_col + 1]
-                    l = 'X' in row[index_row - 1]
+                    l = 'X' in row[index_col - 1]
 
                     tile_type = 'o'
 
@@ -71,7 +71,26 @@ class SoilLayer:
                     if all((t, b, r, l)): tile_type = 'x'
 
                     # horizontal tiles only
+                    if r and not any((t, b, l)): tile_type = 'l'
                     if l and not any((t, b, r)): tile_type = 'r'
+                    if l and r and not any((t, b)): tile_type = 'lr'
+
+                    # vertical tiles only
+                    if t and not any((b, r, l)): tile_type = 'b'
+                    if b and not any((t, r, l)): tile_type = 't'
+                    if b and t and not any((r, l)): tile_type = 'tb'
+
+                    # corners
+                    if t and r and not any((b, l)): tile_type = 'bl'
+                    if t and l and not any((b, r)): tile_type = 'br'
+                    if b and r and not any((t, l)): tile_type = 'tl'
+                    if b and l and not any((t, r)): tile_type = 'tr'
+
+                    # t shapes
+                    if all((t, b, r)) and not l: tile_type = 'tbr'
+                    if all((t, b, l)) and not r: tile_type = 'tbl'
+                    if all((t, r, l)) and not b: tile_type = 'lrb'
+                    if all((b, r, l)) and not t: tile_type = 'lrt'
 
                     SoilTile(
                         pos = (index_col * TILE_SIZE, index_row * TILE_SIZE), 
