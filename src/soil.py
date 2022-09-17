@@ -2,6 +2,7 @@ import pygame
 from settings import *
 from pytmx.util_pygame import load_pygame
 from support import *
+from random import choice
 
 class SoilTile(pygame.sprite.Sprite):
 
@@ -12,16 +13,25 @@ class SoilTile(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft = pos)
         self.z = LAYERS['soil']
 
+class WaterTile(pygame.sprite.Sprite):
+
+    def __init__(self, pos, surf, groups):
+        super().__init__(groups)
+        self.image = surf
+        self.rect = self.image.get_rect(topleft = pos)
+        self.z = LAYERS['soil water']
+
 class SoilLayer:
 
     def __init__(self, all_sprites):
         # sprite groups
         self.all_sprites = all_sprites
         self.soil_sprites = pygame.sprite.Group()
+        self.water_sprites = pygame.sprite.Group()
 
         # graphics
-        self.soil_surf = pygame.image.load('../graphics/soil/o.png')
         self.soil_surfs = import_folder_dict('../graphics/soil/')
+        self.water_surfs = import_folder('../graphics/soil_water')
 
         self.create_soil_grid()
         self.create_hit_rects()
@@ -96,3 +106,27 @@ class SoilLayer:
                         pos = (index_col * TILE_SIZE, index_row * TILE_SIZE), 
                         surf = self.soil_surfs[tile_type], 
                         groups = [ self.all_sprites, self.soil_sprites ])
+
+    def water(self, target_pos):
+        for soil_sprite in self.soil_sprites.sprites():
+            if soil_sprite.rect.collidepoint(target_pos):
+                # add entry to soil grid -> 'W'
+                x, y = soil_sprite.rect.x // TILE_SIZE, soil_sprite.rect.y // TILE_SIZE
+                self.grid[y][x].append('W')
+
+                # create water tile sprite
+                WaterTile(
+                    pos = soil_sprite.rect.topleft,
+                    surf = choice(self.water_surfs),
+                    groups = [ self.all_sprites, self.water_sprites ])
+
+    def remove_water(self):
+        # destroy all water sprite
+        for sprite in self.water_sprites.sprites():
+            sprite.kill()
+
+        # clean up grid
+        for row in self.grid:
+            for cell in row:
+                if 'W' in cell:
+                    cell.remove('W')
