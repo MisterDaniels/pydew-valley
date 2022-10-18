@@ -49,6 +49,13 @@ class Menu:
         # selected
         if selected:
             pygame.draw.rect(self.display_surface, 'Black', bg_rect, 3, 6)
+            
+            if self.index <= self.sell_border: # sell
+                pos_rect = self.sell_text.get_rect(midleft = (self.main_rect.left + 150, bg_rect.centery))
+                self.display_surface.blit(self.sell_text, pos_rect)
+            else: # buy
+                pos_rect = self.buy_text.get_rect(midleft = (self.main_rect.left + 150, bg_rect.centery))
+                self.display_surface.blit(self.buy_text, pos_rect)
 
     def setup(self):
         # create the text surfaces
@@ -65,6 +72,10 @@ class Menu:
         self.main_rect = pygame.Rect(SCREEN_WIDTH / 2 - self.width / 2, self.menu_top, 
             self.width, self.total_height)
 
+        # buy / sell text surface 
+        self.buy_text = self.font.render('Buy', False, 'Black')
+        self.sell_text = self.font.render('Sell', False, 'Black')
+
     def input(self):
         keys = pygame.key.get_pressed()
         self.timer.update()
@@ -80,6 +91,25 @@ class Menu:
             if keys[pygame.K_DOWN]:
                 self.index += 1
                 self.timer.activate()
+
+            if keys[pygame.K_SPACE]:
+                self.timer.activate()
+
+                # get item
+                current_item = self.options[self.index]
+                
+                # sell
+                if self.index <= self.sell_border:
+                    if self.player.item_inventory[current_item] > 0:
+                        self.player.item_inventory[current_item] -= 1
+                        self.player.money += SALE_PRICES[current_item]
+                
+                # buy
+                else:
+                    seed_price = PURCHASE_PRICES[current_item]
+                    if self.player.money >= seed_price:
+                        self.player.seed_inventory[current_item] += 1
+                        self.player.money -= PURCHASE_PRICES[current_item]
 
         # clamp the values
         if self.index < 0:
